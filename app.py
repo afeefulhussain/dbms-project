@@ -1,8 +1,9 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+import os
+import datetime
 from functools import wraps
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from config import Config
 from db import query_db, execute_db, init_db
-import datetime
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -500,7 +501,7 @@ def page_not_found(e):
 
 
 if __name__ == '__main__':
-    # Run Flask on port 5000
-    print("Starting Hospital & Clinic Management Web Server...")
-    print("Open http://127.0.0.1:5000 in your web browser")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    print(f"Starting Hospital & Clinic Management Web Server on port {port}...")
+    app.run(host='0.0.0.0', port=port, debug=False)
+
