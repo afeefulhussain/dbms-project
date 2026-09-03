@@ -38,15 +38,17 @@ def execute_db(query, args=()):
 
 def init_db():
     """Creates the database and tables if they don't exist and seeds initial data."""
-    # Connect without specific DB to create database
-    conn = get_db_connection(use_db=False)
+    # Attempt to create database if permitted (e.g. localhost root), otherwise proceed to table creation
     try:
+        conn = get_db_connection(use_db=False)
         with conn.cursor() as cursor:
             cursor.execute(f"CREATE DATABASE IF NOT EXISTS `{Config.MYSQL_DB}`;")
-    finally:
         conn.close()
+    except Exception as e:
+        # On Railway/Cloud MySQL, database already exists
+        pass
 
-    # Connect to the created DB and execute table creation
+    # Connect to the DB and execute table creation
     conn = get_db_connection(use_db=True)
     try:
         with conn.cursor() as cursor:
