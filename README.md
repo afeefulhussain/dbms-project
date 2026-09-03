@@ -63,22 +63,6 @@ The application uses **MySQL 8.0** with foreign key relational integrity:
 
 ---
 
-## 🚀 How to Run the Application
-
-### Option 1: Double-Click Batch File (Easiest)
-Simply double click `run.bat` in the project folder.
-
-### Option 2: Command Line
-1. Open PowerShell / Command Prompt in the project folder:
-   ```bash
-   cd "d:\UET study\DBMS\project web"
-   ```
-2. Initialize Database and Tables (if not already done):
-   ```bash
-   python setup_db.py
-   ```
-3. Start the Flask Server:
-   ```bash
    python app.py
    ```
 4. Open your web browser and navigate to:
