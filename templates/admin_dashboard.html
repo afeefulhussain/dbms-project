@@ -1,0 +1,414 @@
+{% extends "base.html" %}
+
+{% block title %}ADMIN DECK // MEDCARE{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-4">
+
+    <!-- Top Admin Header Bar -->
+    <div class="deck-card mb-4 bg-pink text-white">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="badge bg-black text-white font-monospace px-2 py-1">[ SUPERUSER ]</span>
+                    <h2 class="fw-bold mb-0 text-uppercase">SYSTEM ADMIN CONTROL DECK</h2>
+                </div>
+                <p class="mb-0 small font-monospace opacity-90">Root permissions active // Full database read/write access</p>
+            </div>
+
+            <!-- Quick Action Buttons -->
+            <div class="d-flex flex-wrap gap-2">
+                <button class="btn-neo btn-yellow" data-bs-toggle="modal" data-bs-target="#addPatientModal">
+                    <i class="fa-solid fa-ticket me-1"></i> BOOK PATIENT
+                </button>
+                <button class="btn-neo btn-cyan" data-bs-toggle="modal" data-bs-target="#addDoctorModal">
+                    <i class="fa-solid fa-user-doctor me-1"></i> ADD DOCTOR
+                </button>
+                <button class="btn-neo btn-white" data-bs-toggle="modal" data-bs-target="#addReceptionistModal">
+                    <i class="fa-solid fa-user-pen me-1"></i> ADD RECEPTIONIST
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+            <div class="stat-block cyan">
+                <span class="stat-label">Total Doctors</span>
+                <div class="stat-value">{{ doctors_count }}</div>
+                <small class="font-monospace text-muted">Active consultants</small>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="stat-block pink">
+                <span class="stat-label">Receptionists</span>
+                <div class="stat-value">{{ receptionists_count }}</div>
+                <small class="font-monospace text-muted">Desk operators</small>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="stat-block yellow">
+                <span class="stat-label">Running Queue</span>
+                <div class="stat-value">{{ running_patients_count }}</div>
+                <small class="font-monospace text-muted">Waiting consultation</small>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="stat-block green">
+                <span class="stat-label">Completed</span>
+                <div class="stat-value">{{ checked_patients_count }}</div>
+                <small class="font-monospace text-muted">Checked visits</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Switcher -->
+    <div class="d-flex flex-wrap gap-2 mb-4">
+        <a class="btn-neo {% if active_tab == 'overview' or not active_tab %}btn-black{% else %}btn-white{% endif %}" 
+           href="{{ url_for('admin_dashboard', tab='overview') }}">
+            <i class="fa-solid fa-list-check me-1"></i> PATIENT LEDGER ({{ all_patients_count }})
+        </a>
+        <a class="btn-neo {% if active_tab == 'doctors' %}btn-black{% else %}btn-white{% endif %}" 
+           href="{{ url_for('admin_dashboard', tab='doctors') }}">
+            <i class="fa-solid fa-stethoscope me-1"></i> DOCTORS DIRECTORY ({{ doctors|length }})
+        </a>
+        <a class="btn-neo {% if active_tab == 'receptionists' %}btn-black{% else %}btn-white{% endif %}" 
+           href="{{ url_for('admin_dashboard', tab='receptionists') }}">
+            <i class="fa-solid fa-address-card me-1"></i> RECEPTION STAFF ({{ receptionists|length }})
+        </a>
+    </div>
+
+    <!-- TAB 1: PATIENTS DIRECTORY -->
+    {% if active_tab == 'overview' or not active_tab %}
+    <div class="deck-card">
+        
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
+            <div class="d-flex align-items-center gap-2">
+                <span class="pixel-pulse"></span>
+                <h4 class="fw-bold mb-0 text-uppercase">// APPOINTMENTS & QUEUE LEDGER</h4>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+                <!-- Status Filter Buttons -->
+                <a href="{{ url_for('admin_dashboard', tab='overview', filter='all') }}" 
+                   class="btn-neo btn-neo-sm {% if filter_status == 'all' or not filter_status %}btn-black{% else %}btn-white{% endif %}">
+                    ALL
+                </a>
+                <a href="{{ url_for('admin_dashboard', tab='overview', filter='running') }}" 
+                   class="btn-neo btn-neo-sm {% if filter_status == 'running' %}btn-yellow{% else %}btn-white{% endif %}">
+                    WAITING ({{ running_patients_count }})
+                </a>
+                <a href="{{ url_for('admin_dashboard', tab='overview', filter='checked') }}" 
+                   class="btn-neo btn-neo-sm {% if filter_status == 'checked' %}btn-green{% else %}btn-white{% endif %}">
+                    CHECKED ({{ checked_patients_count }})
+                </a>
+
+                <!-- Search Input -->
+                <input type="text" class="form-control form-control-neo py-1 table-search-input" 
+                       data-table="patientsTable" placeholder="Search table..." style="width: 200px;">
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-neo" id="patientsTable">
+                <thead>
+                    <tr>
+                        <th>Token</th>
+                        <th>Patient Name</th>
+                        <th>Consulting Doctor</th>
+                        <th>Booked By</th>
+                        <th>Schedule</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in patients %}
+                    <tr>
+                        <td><span class="pixel-token">{{ p.token_number }}</span></td>
+                        <td>
+                            <div class="fw-bold fs-6">{{ p.name }}</div>
+                            <small class="font-monospace text-muted">REC #{{ p.id }}</small>
+                        </td>
+                        <td>
+                            <div class="fw-bold text-dark">{{ p.doctor_name }}</div>
+                            <span class="badge-neo specialty">{{ p.specialization }}</span>
+                        </td>
+                        <td>
+                            {% if p.receptionist_name %}
+                                <span class="badge-neo waiting">{{ p.receptionist_code }} ({{ p.receptionist_name }})</span>
+                            {% else %}
+                                <span class="badge-neo admin">ROOT ADMIN</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div><i class="fa-regular fa-calendar me-1"></i>{{ p.appointment_date }}</div>
+                            <small class="font-monospace"><i class="fa-regular fa-clock me-1"></i>{{ p.appointment_time }}</small>
+                        </td>
+                        <td>
+                            {% if p.is_checked == 1 %}
+                                <span class="badge-neo checked"><i class="fa-solid fa-check me-1"></i>CHECKED</span>
+                            {% else %}
+                                <span class="badge-neo waiting"><i class="fa-solid fa-hourglass-half me-1"></i>WAITING</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <div class="d-inline-flex gap-1">
+                                <!-- Print Slip -->
+                                <button class="btn-neo btn-neo-sm btn-cyan" title="Print Token Slip"
+                                        onclick="printToken('{{ p.name }}', '{{ p.token_number }}', '{{ p.doctor_name }}', '{{ p.appointment_date }}', '{{ p.appointment_time }}')">
+                                    <i class="fa-solid fa-print"></i>
+                                </button>
+                                <!-- Toggle Status -->
+                                <form method="POST" action="{{ url_for('admin_toggle_patient', patient_id=p.id) }}" class="d-inline">
+                                    <button type="submit" class="btn-neo btn-neo-sm btn-white" title="Toggle State">
+                                        <i class="fa-solid fa-arrows-rotate"></i>
+                                    </button>
+                                </form>
+                                <!-- Delete Record -->
+                                <form method="POST" action="{{ url_for('admin_delete_patient', patient_id=p.id) }}" class="d-inline"
+                                      onsubmit="return confirm('Confirm permanent deletion of patient token record?');">
+                                    <button type="submit" class="btn-neo btn-neo-sm btn-pink" title="Delete">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5 font-monospace">
+                            [ NO RECORDS MATCHING SPECIFIED FILTER ]
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+    {% endif %}
+
+    <!-- TAB 2: MANAGE DOCTORS -->
+    {% if active_tab == 'doctors' %}
+    <div class="deck-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="fw-bold mb-0 text-uppercase">// CLINICAL SPECIALISTS DIRECTORY</h4>
+            <button class="btn-neo btn-cyan" data-bs-toggle="modal" data-bs-target="#addDoctorModal">
+                <i class="fa-solid fa-plus me-1"></i> ADD NEW DOCTOR
+            </button>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-neo">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Doctor Name</th>
+                        <th>Specialty Field</th>
+                        <th>Contact Phone</th>
+                        <th>Registered Date</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for doc in doctors %}
+                    <tr>
+                        <td><span class="pixel-token" style="width:34px;height:34px;font-size:0.95rem;">#{{ doc.id }}</span></td>
+                        <td class="fw-bold fs-6">{{ doc.name }}</td>
+                        <td><span class="badge-neo specialty">{{ doc.specialization }}</span></td>
+                        <td class="font-monospace">{{ doc.phone }}</td>
+                        <td class="font-monospace small text-muted">{{ doc.created_at }}</td>
+                        <td class="text-end">
+                            <form method="POST" action="{{ url_for('admin_delete_doctor', doc_id=doc.id) }}" class="d-inline"
+                                  onsubmit="return confirm('Delete this doctor? All their associated appointments will be purged.');">
+                                <button type="submit" class="btn-neo btn-neo-sm btn-pink">
+                                    <i class="fa-solid fa-trash me-1"></i> DELETE
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 font-monospace">[ NO DOCTORS CONFIGURED ]</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- TAB 3: MANAGE RECEPTIONISTS -->
+    {% if active_tab == 'receptionists' %}
+    <div class="deck-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="fw-bold mb-0 text-uppercase">// RECEPTION DESK OPERATORS</h4>
+            <button class="btn-neo btn-yellow" data-bs-toggle="modal" data-bs-target="#addReceptionistModal">
+                <i class="fa-solid fa-plus me-1"></i> ADD RECEPTIONIST
+            </button>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-neo">
+                <thead>
+                    <tr>
+                        <th>Access Code</th>
+                        <th>Staff Name</th>
+                        <th>Access Key</th>
+                        <th>Registered Date</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rec in receptionists %}
+                    <tr>
+                        <td><span class="badge-neo waiting fs-6">{{ rec.receptionist_code }}</span></td>
+                        <td class="fw-bold">{{ rec.name }}</td>
+                        <td class="font-monospace text-muted">••••••••</td>
+                        <td class="font-monospace small text-muted">{{ rec.created_at }}</td>
+                        <td class="text-end">
+                            <form method="POST" action="{{ url_for('admin_delete_receptionist', rec_id=rec.id) }}" class="d-inline"
+                                  onsubmit="return confirm('Remove receptionist authorization?');">
+                                <button type="submit" class="btn-neo btn-neo-sm btn-pink">
+                                    <i class="fa-solid fa-trash me-1"></i> DELETE
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center py-4 font-monospace">[ NO RECEPTIONISTS CONFIGURED ]</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- ==================== MODALS (NEO-RETRO STYLED) ==================== -->
+
+<!-- Add Doctor Modal -->
+<div class="modal fade" id="addDoctorModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content modal-content-neo">
+            <div class="modal-header modal-header-neo bg-cyan text-dark">
+                <h5 class="modal-title fw-bold text-uppercase">// ADD CLINICAL SPECIALIST</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin_add_doctor') }}">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label font-monospace fw-bold small">&gt; Doctor Full Name</label>
+                        <input type="text" class="form-control form-control-neo" name="name" placeholder="e.g. Dr. Muhammad Ali" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label font-monospace fw-bold small">&gt; Specialty Category</label>
+                        <select class="form-select form-select-neo" name="specialization" required>
+                            <option value="" disabled selected>Select specialty category...</option>
+                            <option value="General Physician">General Physician</option>
+                            <option value="ENT Specialist">ENT Specialist</option>
+                            <option value="Skin Specialist">Skin Specialist (Dermatology)</option>
+                            <option value="Cardiologist">Cardiologist</option>
+                            <option value="Pediatrician">Pediatrician (Child)</option>
+                            <option value="Orthopedic">Orthopedic</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label font-monospace fw-bold small">&gt; Phone Contact</label>
+                        <input type="text" class="form-control form-control-neo" name="phone" placeholder="0300-1234567" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label font-monospace fw-bold small">&gt; Default Password</label>
+                        <input type="password" class="form-control form-control-neo" name="password" placeholder="Default: 123456">
+                    </div>
+                </div>
+                <div class="modal-footer modal-footer-neo">
+                    <button type="button" class="btn-neo btn-white" data-bs-dismiss="modal">CANCEL</button>
+                    <button type="submit" class="btn-neo btn-cyan">SAVE DOCTOR</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Receptionist Modal -->
+<div class="modal fade" id="addReceptionistModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content modal-content-neo">
+            <div class="modal-header modal-header-neo bg-yellow text-dark">
+                <h5 class="modal-title fw-bold text-uppercase">// REGISTER RECEPTION DESK</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin_add_receptionist') }}">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label font-monospace fw-bold small">&gt; Receptionist ID / Code</label>
+                        <input type="text" class="form-control form-control-neo" name="receptionist_code" placeholder="e.g. REC103" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label font-monospace fw-bold small">&gt; Operator Full Name</label>
+                        <input type="text" class="form-control form-control-neo" name="name" placeholder="e.g. Sara Khan" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label font-monospace fw-bold small">&gt; Access Password</label>
+                        <input type="password" class="form-control form-control-neo" name="password" placeholder="Enter secure password" required>
+                    </div>
+                </div>
+                <div class="modal-footer modal-footer-neo">
+                    <button type="button" class="btn-neo btn-white" data-bs-dismiss="modal">CANCEL</button>
+                    <button type="submit" class="btn-neo btn-yellow">SAVE OPERATOR</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Patient Modal -->
+<div class="modal fade" id="addPatientModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content modal-content-neo">
+            <div class="modal-header modal-header-neo bg-black text-white">
+                <h5 class="modal-title fw-bold text-uppercase">// ISSUE PATIENT TOKEN & APPOINTMENT</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin_add_patient') }}">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label font-monospace fw-bold small">&gt; Patient Full Name</label>
+                        <input type="text" class="form-control form-control-neo" name="name" placeholder="Enter patient name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label font-monospace fw-bold small">&gt; Assign Doctor</label>
+                        <select class="form-select form-select-neo" name="doctor_id" required>
+                            <option value="" disabled selected>Select active doctor...</option>
+                            {% for doc in doctors %}
+                            <option value="{{ doc.id }}">{{ doc.name }} ({{ doc.specialization }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label font-monospace fw-bold small">&gt; Date</label>
+                            <input type="date" class="form-control form-control-neo" name="appointment_date" value="{{ today_str }}" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label font-monospace fw-bold small">&gt; Time</label>
+                            <input type="text" class="form-control form-control-neo" name="appointment_time" value="{{ now_time }}" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer modal-footer-neo">
+                    <button type="button" class="btn-neo btn-white" data-bs-dismiss="modal">CANCEL</button>
+                    <button type="submit" class="btn-neo btn-yellow">ISSUE TOKEN</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

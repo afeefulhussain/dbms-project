@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block title %}HUB // MEDCARE QUEUE ENGINE{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- HERO EDITORIAL DECK -->
+    <div class="hero-deck">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-8">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <span class="pixel-pulse"></span>
+                    <span class="badge-neo checked">SYSTEM STATE: ACTIVE</span>
+                    <span class="badge-neo waiting">HOST: LOCALHOST:3306</span>
+                </div>
+                
+                <h1 class="hero-title">
+                    SMART CLINIC & <br>
+                    <mark>PATIENT QUEUE</mark> ENGINE
+                </h1>
+                
+                <p class="fs-5 mb-4 fw-medium text-dark">
+                    High-throughput clinic coordination deck. Multi-tier role execution across <strong>Admins</strong>, <strong>Receptionists</strong>, and <strong>Specialist Doctors</strong> with atomic MySQL token sequencing.
+                </p>
+
+                <div class="d-flex flex-wrap gap-3">
+                    <a href="{{ url_for('live_queue') }}" class="btn-neo btn-cyan">
+                        <i class="fa-solid fa-tv"></i> LAUNCH WAITING ROOM TV
+                    </a>
+                    <a href="{{ url_for('login', role='admin') }}" class="btn-neo btn-white">
+                        <i class="fa-solid fa-shield-halved"></i> ADMIN CONSOLE
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-lg-4 text-center d-none d-lg-block">
+                <!-- Academic Supervisor Box -->
+                <div class="deck-card bg-yellow text-start mb-3" style="transform: rotate(1.5deg);">
+                    <div class="deck-header-bar mb-2">
+                        <span>[ SUPERVISION ]</span>
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </div>
+                    <div class="font-monospace small">
+                        <div class="fw-bold text-dark fs-6">Mrs. Minahil Tayyab</div>
+                        <div class="text-muted">Course Instructor & Project Supervisor</div>
+                        <div class="mt-2 pt-2 border-top border-dark small">
+                            <span class="badge-neo admin" style="font-size:0.65rem;">DBMS PROJECT</span>
+                            <span class="badge-neo" style="background:#fff;font-size:0.65rem;">UET LAHORE</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tech Specs Card -->
+                <div class="deck-card bg-white text-start" style="transform: rotate(-1.5deg); box-shadow: 4px 4px 0px #000;">
+                    <ul class="list-unstyled mb-0 font-monospace small">
+                        <li class="mb-1"><strong>ENGINE:</strong> Python + Flask</li>
+                        <li class="mb-1"><strong>STORAGE:</strong> MySQL 8.0 Engine</li>
+                        <li><strong>QUEUE:</strong> Token Sequential</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- METRICS DECK (HIGH CONTRAST STATS) -->
+    <div class="deck-header-bar">
+        <span>// LIVE DATABASE METRICS [clinic_db]</span>
+        <span>AUTO-SYNC</span>
+    </div>
+
+    <div class="row g-3 mb-5">
+        <div class="col-md-4">
+            <div class="stat-block cyan">
+                <span class="stat-label"><i class="fa-solid fa-database me-1"></i> Total Registrations</span>
+                <div class="stat-value">{{ total_patients }}</div>
+                <small class="font-monospace text-muted">Aggregated patient ledger records</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-block yellow">
+                <span class="stat-label"><i class="fa-solid fa-hourglass-half me-1"></i> Running Queue (Waiting)</span>
+                <div class="stat-value">{{ running_patients }}</div>
+                <small class="font-monospace text-muted">Active tokens in room lines</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-block green">
+                <span class="stat-label"><i class="fa-solid fa-circle-check me-1"></i> Consultations Done</span>
+                <div class="stat-value">{{ checked_patients }}</div>
+                <small class="font-monospace text-muted">Checked by assigned doctors</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- ROLE EXECUTION CARTRIDGES -->
+    <div class="deck-header-bar yellow">
+        <span>// SELECT OPERATOR CARTRIDGE</span>
+        <span>AUTH REQUIRED</span>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <!-- Admin Cartridge -->
+        <div class="col-md-4">
+            <div class="cartridge-card">
+                <div>
+                    <span class="cartridge-tag pink">[ LAYER 01: ADMIN ]</span>
+                    <h3 class="fw-bold mb-2">SYSTEM ADMIN</h3>
+                    <p class="text-muted small mb-4">
+                        Full administrative oversight. Add doctors, onboard receptionists, schedule appointments, and inspect database state.
+                    </p>
+                </div>
+                <a href="{{ url_for('login', role='admin') }}" class="btn-neo btn-pink w-100">
+                    <i class="fa-solid fa-lock-open me-1"></i> OPEN ADMIN DECK
+                </a>
+            </div>
+        </div>
+
+        <!-- Receptionist Cartridge -->
+        <div class="col-md-4">
+            <div class="cartridge-card">
+                <div>
+                    <span class="cartridge-tag yellow">[ LAYER 02: INTAKE ]</span>
+                    <h3 class="fw-bold mb-2">RECEPTION DESK</h3>
+                    <p class="text-muted small mb-4">
+                        Patient intake operations. Assign specialized consultants, emit sequential queue tokens, and print consultation slips.
+                    </p>
+                </div>
+                <a href="{{ url_for('login', role='receptionist') }}" class="btn-neo btn-yellow w-100">
+                    <i class="fa-solid fa-address-card me-1"></i> OPEN RECEPTION DESK
+                </a>
+            </div>
+        </div>
+
+        <!-- Doctor Cartridge -->
+        <div class="col-md-4">
+            <div class="cartridge-card">
+                <div>
+                    <span class="cartridge-tag cyan">[ LAYER 03: CLINICAL ]</span>
+                    <h3 class="fw-bold mb-2">DOCTOR WORKSPACE</h3>
+                    <p class="text-muted small mb-4">
+                        Doctor consultation console. View designated room queue, call next patient by token number, and mark visits checked.
+                    </p>
+                </div>
+                <a href="{{ url_for('login', role='doctor') }}" class="btn-neo btn-cyan w-100">
+                    <i class="fa-solid fa-user-doctor me-1"></i> OPEN DOCTOR CONSOLE
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- SYSTEM ARCHITECTURE STACK & LIVE SNAPSHOT -->
+    <div class="row g-4">
+        
+        <!-- Stack Layer Graphic -->
+        <div class="col-lg-6">
+            <div class="deck-card h-100">
+                <div class="deck-header-bar mb-3">
+                    <span>// SYSTEM ARCHITECTURE</span>
+                    <i class="fa-solid fa-layer-group"></i>
+                </div>
+                
+                <div class="d-flex flex-column gap-2">
+                    <div class="p-3 border-thick bg-pink text-white" style="border: var(--border-thick); box-shadow: 3px 3px 0px #000;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong>1. PRESENTATION LAYER</strong>
+                            <span class="badge bg-black text-white font-monospace">Neo-Retro UI</span>
+                        </div>
+                        <small class="opacity-90">Responsive Infographic Deck + Digital Signage Screen</small>
+                    </div>
+
+                    <div class="p-3 bg-yellow" style="border: var(--border-thick); box-shadow: 3px 3px 0px #000;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong>2. BUSINESS LOGIC ENGINE</strong>
+                            <span class="badge bg-black text-white font-monospace">Python Flask</span>
+                        </div>
+                        <small>Role Authorization, Token Allocation, REST State Endpoints</small>
+                    </div>
+
+                    <div class="p-3 bg-cyan" style="border: var(--border-thick); box-shadow: 3px 3px 0px #000;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong>3. PERSISTENCE LAYER</strong>
+                            <span class="badge bg-black text-white font-monospace">MySQL 8.0</span>
+                        </div>
+                        <small>Relational Schema with Foreign Key Cascade & Atomic Indexing</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Queue Snapshot Table -->
+        <div class="col-lg-6">
+            <div class="deck-card h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="pixel-pulse"></span>
+                        <h5 class="fw-bold mb-0 text-uppercase">// RUNNING QUEUE FEED</h5>
+                    </div>
+                    <a href="{{ url_for('live_queue') }}" class="btn-neo btn-neo-sm btn-yellow">
+                        EXPAND <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-neo">
+                        <thead>
+                            <tr>
+                                <th>Token</th>
+                                <th>Patient</th>
+                                <th>Doctor</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in recent_queue %}
+                            <tr>
+                                <td><span class="pixel-token" style="width:32px;height:32px;font-size:0.95rem;">{{ p.token_number }}</span></td>
+                                <td class="fw-bold">{{ p.name }}</td>
+                                <td>
+                                    <div>{{ p.doctor_name }}</div>
+                                    <span class="badge-neo specialty" style="font-size:0.7rem;">{{ p.specialization }}</span>
+                                </td>
+                                <td><span class="badge-neo" style="background:#fff;">{{ p.appointment_time }}</span></td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4 font-monospace">
+                                    [ ZERO PENDING TOKENS IN ACTIVE QUEUE ]
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

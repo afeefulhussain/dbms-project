@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}DOCTOR CONSOLE // {{ doctor.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-4">
+
+    <!-- Doctor Header Deck -->
+    <div class="deck-card mb-4 bg-cyan">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="pixel-token large" style="background:#000;color:#00ff66;">
+                    <i class="fa-solid fa-user-doctor"></i>
+                </div>
+                <div>
+                    <div class="d-flex align-items-center gap-2">
+                        <h2 class="fw-bold mb-0 text-uppercase">{{ doctor.name }}</h2>
+                        <span class="badge bg-black text-white font-monospace">DOC ID: #{{ doctor.id }}</span>
+                    </div>
+                    <div class="d-flex gap-2 mt-1">
+                        <span class="badge-neo specialty" style="background:#fff;">{{ doctor.specialization }}</span>
+                        <span class="font-monospace small align-self-center">PHONE: {{ doctor.phone }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Queue Counter Badges -->
+            <div class="d-flex align-items-center gap-3">
+                <div class="text-md-end p-2 bg-white" style="border:var(--border-thin);box-shadow:3px 3px 0px #000;">
+                    <span class="font-monospace small d-block">WAITING LINE</span>
+                    <h3 class="fw-bold mb-0 text-danger">{{ pending_patients|length }}</h3>
+                </div>
+                <div class="text-md-end p-2 bg-white" style="border:var(--border-thin);box-shadow:3px 3px 0px #000;">
+                    <span class="font-monospace small d-block">CHECKED TODAY</span>
+                    <h3 class="fw-bold mb-0 text-success">{{ checked_patients|length }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Room Queue -->
+    <div class="deck-card mb-4">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-3">
+            <div class="d-flex align-items-center gap-2">
+                <span class="pixel-pulse"></span>
+                <h4 class="fw-bold mb-0 text-uppercase">// ACTIVE ROOM QUEUE (PENDING CONSULTATIONS)</h4>
+            </div>
+            <span class="badge-neo waiting fs-6">{{ pending_patients|length }} TOKENS REMAINING</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-neo">
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">Token</th>
+                        <th>Patient Name</th>
+                        <th>Appointment Time</th>
+                        <th>Date</th>
+                        <th>Intake Staff</th>
+                        <th>Status</th>
+                        <th class="text-end" style="min-width: 180px;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in pending_patients %}
+                    <tr>
+                        <td><span class="pixel-token large" style="width:48px;height:48px;font-size:1.3rem;">{{ p.token_number }}</span></td>
+                        <td>
+                            <div class="fw-bold fs-5 text-dark">{{ p.name }}</div>
+                            <small class="font-monospace text-muted">PATIENT ID #{{ p.id }}</small>
+                        </td>
+                        <td>
+                            <span class="badge-neo" style="background:#fff;font-size:0.9rem;">
+                                <i class="fa-regular fa-clock me-1"></i>{{ p.appointment_time }}
+                            </span>
+                        </td>
+                        <td><span class="font-monospace">{{ p.appointment_date }}</span></td>
+                        <td>
+                            {% if p.receptionist_name %}
+                                <span class="font-monospace small">{{ p.receptionist_name }}</span>
+                            {% else %}
+                                <span class="font-monospace small">Admin</span>
+                            {% endif %}
+                        </td>
+                        <td><span class="badge-neo waiting"><i class="fa-solid fa-hourglass-half me-1"></i>WAITING</span></td>
+                        <td class="text-end">
+                            <form method="POST" action="{{ url_for('doctor_mark_checked', patient_id=p.id) }}" class="d-inline">
+                                <button type="submit" class="btn-neo btn-green btn-neo-sm py-2 px-3">
+                                    <i class="fa-solid fa-circle-check me-1"></i> MARK AS CHECKED
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5 font-monospace">
+                            <div class="fs-4 fw-bold">[ ALL CAUGHT UP! NO PENDING TOKENS ]</div>
+                            <div class="text-muted small">Your patient queue is currently clear.</div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Checked Consultations Ledger -->
+    <div class="deck-card">
+        <div class="deck-header-bar mb-3">
+            <span>// CONSULTATION HISTORY (COMPLETED VISITS)</span>
+            <span>COUNT: {{ checked_patients|length }}</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-neo">
+                <thead>
+                    <tr>
+                        <th>Token #</th>
+                        <th>Patient Name</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>State</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in checked_patients %}
+                    <tr>
+                        <td><span class="font-monospace fw-bold">#{{ p.token_number }}</span></td>
+                        <td class="fw-bold">{{ p.name }}</td>
+                        <td class="font-monospace">{{ p.appointment_date }}</td>
+                        <td class="font-monospace">{{ p.appointment_time }}</td>
+                        <td><span class="badge-neo checked"><i class="fa-solid fa-check me-1"></i>COMPLETED</span></td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center py-4 font-monospace">[ NO COMPLETED VISITS YET ]</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

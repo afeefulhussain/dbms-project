@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}LIVE QUEUE TV // WAITING AREA DISPLAY{% endblock %}
+
+{% block extra_head %}
+<!-- Auto-refresh every 8 seconds for waiting area display -->
+<meta http-equiv="refresh" content="8">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-5 py-4">
+
+    <!-- Screen Header Deck -->
+    <div class="deck-card bg-black text-white mb-4 py-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+                <span class="pixel-pulse" style="width:16px;height:16px;"></span>
+                <h2 class="fw-bold mb-0 text-uppercase" style="letter-spacing:1px;">LIVE PATIENT QUEUE // WAITING AREA DISPLAY</h2>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <span class="badge-neo waiting font-monospace" style="font-size:0.9rem;">SYNC: 8s</span>
+                <span class="badge-neo checked font-monospace fs-5" id="clock">--:--:--</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Multi-Doctor Room Calling Cards Grid -->
+    <div class="row g-4">
+        {% for doc in doctors %}
+        <div class="col-md-6 col-xl-3">
+            <div class="deck-card p-0 overflow-hidden h-100" style="border: 4px solid #000; box-shadow: 8px 8px 0px #000;">
+                
+                <!-- Room / Doctor Header -->
+                <div class="p-3 bg-yellow border-bottom" style="border-bottom: 3px solid #000 !important;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h4 class="fw-bold mb-0 text-dark">{{ doc.name }}</h4>
+                            <span class="badge-neo specialty mt-1" style="background:#fff;">{{ doc.specialization }}</span>
+                        </div>
+                        <span class="badge bg-black text-white font-monospace fs-6">ROOM {{ doc.id }}</span>
+                    </div>
+                </div>
+
+                <!-- NOW CALLING ACTIVE TOKEN DISPLAY -->
+                <div class="p-4 text-center bg-white border-bottom" style="border-bottom: 3px solid #000 !important;">
+                    <span class="badge-neo admin mb-2">NOW CALLING TOKEN</span>
+                    {% if doc.queue %}
+                        <div class="pixel-token large mx-auto my-3" style="width:90px;height:90px;font-size:3rem;background:#ff2a85;color:#fff;">
+                            {{ doc.queue[0].token_number }}
+                        </div>
+                        <div class="fw-bold text-dark fs-4 mb-1">{{ doc.queue[0].name }}</div>
+                        <span class="badge-neo" style="background:#fff;border:1px solid #000;"><i class="fa-regular fa-clock me-1"></i>{{ doc.queue[0].appointment_time }}</span>
+                    {% else %}
+                        <div class="py-4">
+                            <div class="pixel-token large mx-auto mb-2" style="background:#eee;color:#888;font-size:1.8rem;">
+                                --
+                            </div>
+                            <div class="font-monospace text-muted fw-bold">NO PENDING PATIENTS</div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- NEXT IN LINE LIST -->
+                <div class="p-3 bg-cream flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="font-monospace fw-bold small text-uppercase">&gt; Next In Line</span>
+                        <span class="badge bg-black text-white font-monospace small">
+                            {% if doc.queue|length > 1 %}{{ doc.queue|length - 1 }} WAITING{% else %}0{% endif %}
+                        </span>
+                    </div>
+
+                    {% if doc.queue|length > 1 %}
+                        <div class="d-flex flex-column gap-2">
+                            {% for next_p in doc.queue[1:4] %}
+                            <div class="p-2 bg-white d-flex justify-content-between align-items-center" style="border: 2px solid #000; box-shadow: 2px 2px 0px #000;">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="pixel-token" style="width:28px;height:28px;font-size:0.85rem;background:#ffdf00;">{{ next_p.token_number }}</span>
+                                    <strong class="small">{{ next_p.name }}</strong>
+                                </div>
+                                <small class="font-monospace text-muted">{{ next_p.appointment_time }}</small>
+                            </div>
+                            {% endfor %}
+                            {% if doc.queue|length > 4 %}
+                            <small class="text-center text-muted font-monospace">+ {{ doc.queue|length - 4 }} more in line</small>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-2 font-monospace text-muted small">[ ROOM QUEUE CLEAR ]</div>
+                    {% endif %}
+                </div>
+
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function updateClock() {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString();
+    const clockEl = document.getElementById('clock');
+    if (clockEl) clockEl.textContent = timeStr;
+}
+setInterval(updateClock, 1000);
+updateClock();
+</script>
+{% endblock %}

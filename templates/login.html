@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}AUTH // SYSTEM LOGIN{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7 col-lg-5">
+            
+            <div class="deck-card shadow-xl p-4 p-md-5">
+                
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="badge-neo checked">TERMINAL ACCESS</span>
+                    <span class="font-monospace text-muted small">PORT: 5000</span>
+                </div>
+
+                <h2 class="fw-bold mb-1 text-uppercase">// AUTHENTICATE</h2>
+                <p class="text-muted small font-monospace mb-4">Select operator tier to initialize privileged session</p>
+
+                <!-- Role Selector Buttons -->
+                <div class="d-flex gap-2 mb-4" id="roleTabs">
+                    <button class="btn-neo btn-neo-sm {% if selected_role == 'admin' %}btn-pink{% else %}btn-white{% endif %} flex-grow-1" 
+                            type="button" onclick="setRole('admin', this)">
+                        ADMIN
+                    </button>
+                    <button class="btn-neo btn-neo-sm {% if selected_role == 'receptionist' %}btn-yellow{% else %}btn-white{% endif %} flex-grow-1" 
+                            type="button" onclick="setRole('receptionist', this)">
+                        RECEPTION
+                    </button>
+                    <button class="btn-neo btn-neo-sm {% if selected_role == 'doctor' %}btn-cyan{% else %}btn-white{% endif %} flex-grow-1" 
+                            type="button" onclick="setRole('doctor', this)">
+                        DOCTOR
+                    </button>
+                </div>
+
+                <form method="POST" action="{{ url_for('login') }}">
+                    <input type="hidden" name="role" id="selectedRoleInput" value="{{ selected_role }}">
+
+                    <!-- Identifier Input -->
+                    <div class="mb-3">
+                        <label for="identifier" class="form-label font-monospace fw-bold small text-uppercase" id="identifierLabel">
+                            {% if selected_role == 'admin' %}&gt; Admin Username
+                            {% elif selected_role == 'receptionist' %}&gt; Receptionist ID / Code
+                            {% else %}&gt; Doctor ID #
+                            {% endif %}
+                        </label>
+                        <input type="text" class="form-control form-control-neo" id="identifier" name="identifier" 
+                               placeholder="e.g. admin" required autofocus>
+                    </div>
+
+                    <!-- Password Input -->
+                    <div class="mb-4">
+                        <label for="password" class="form-label font-monospace fw-bold small text-uppercase">&gt; Security Password</label>
+                        <input type="password" class="form-control form-control-neo" id="password" name="password" 
+                               placeholder="••••••••" required>
+                    </div>
+
+                    <button type="submit" class="btn-neo btn-black w-100 py-2 fs-6">
+                        <i class="fa-solid fa-arrow-right-to-bracket me-2"></i> INITIALIZE SESSION
+                    </button>
+                </form>
+
+                <!-- Credentials Help Drawer -->
+                <div class="mt-4 p-3 bg-yellow" style="border: var(--border-thin); box-shadow: 3px 3px 0px #000;">
+                    <div class="d-flex align-items-center mb-1">
+                        <i class="fa-solid fa-terminal me-2"></i>
+                        <span class="fw-bold font-monospace small">DEFAULT SYSTEM CREDENTIALS:</span>
+                    </div>
+                    <ul class="list-unstyled mb-0 font-monospace small">
+                        <li><strong>ADMIN:</strong> <code>admin</code> / <code>admin123</code></li>
+                        <li><strong>RECEPTION:</strong> <code>REC101</code> / <code>pass123</code></li>
+                        <li><strong>DOCTOR:</strong> <code>1</code> / <code>123456</code></li>
+                    </ul>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function setRole(role, btn) {
+    document.getElementById('selectedRoleInput').value = role;
+    
+    // Clear all active classes
+    const buttons = document.querySelectorAll('#roleTabs button');
+    buttons.forEach(b => {
+        b.className = 'btn-neo btn-neo-sm btn-white flex-grow-1';
+    });
+
+    const label = document.getElementById('identifierLabel');
+    const input = document.getElementById('identifier');
+    
+    if (role === 'admin') {
+        btn.className = 'btn-neo btn-neo-sm btn-pink flex-grow-1';
+        label.textContent = '> Admin Username';
+        input.placeholder = 'e.g. admin';
+    } else if (role === 'receptionist') {
+        btn.className = 'btn-neo btn-neo-sm btn-yellow flex-grow-1';
+        label.textContent = '> Receptionist ID / Code';
+        input.placeholder = 'e.g. REC101';
+    } else if (role === 'doctor') {
+        btn.className = 'btn-neo btn-neo-sm btn-cyan flex-grow-1';
+        label.textContent = '> Doctor ID #';
+        input.placeholder = 'e.g. 1';
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}RECEPTION DESK // MEDCARE{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-4">
+
+    <!-- Reception Header Bar -->
+    <div class="deck-card mb-4 bg-yellow">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="badge bg-black text-white font-monospace px-2 py-1">[ DESK: {{ session.get('receptionist_code') }} ]</span>
+                    <h2 class="fw-bold mb-0 text-uppercase">RECEPTIONIST INTAKE DECK</h2>
+                </div>
+                <p class="mb-0 small font-monospace">Operator: <strong>{{ session.get('user_name') }}</strong> // Fast Patient Token Allocation</p>
+            </div>
+
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('live_queue') }}" class="btn-neo btn-black" target="_blank">
+                    <i class="fa-solid fa-tv me-1"></i> WAITING ROOM TV
+                </a>
+                <a href="{{ url_for('logout') }}" class="btn-neo btn-white">
+                    <i class="fa-solid fa-power-off me-1"></i> LOGOUT
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Counter Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="stat-block cyan py-3">
+                <span class="stat-label">Total Registered</span>
+                <div class="stat-value fs-2">{{ total_patients_count }}</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-block yellow py-3">
+                <span class="stat-label">Currently Waiting</span>
+                <div class="stat-value fs-2">{{ running_count }}</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-block green py-3">
+                <span class="stat-label">Consultations Checked</span>
+                <div class="stat-value fs-2">{{ checked_count }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Grid: Booking Form (Left) & Directory (Right) -->
+    <div class="row g-4">
+        
+        <!-- Registration Form Cartridge -->
+        <div class="col-lg-4">
+            <div class="deck-card">
+                <div class="deck-header-bar yellow mb-3">
+                    <span>// BOOK APPOINTMENT</span>
+                    <i class="fa-solid fa-ticket"></i>
+                </div>
+
+                <form method="POST" action="{{ url_for('receptionist_add_patient') }}">
+                    <div class="mb-3">
+                        <label class="form-label font-monospace fw-bold small">&gt; Patient Full Name</label>
+                        <input type="text" class="form-control form-control-neo" name="name" placeholder="e.g. John Doe" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label font-monospace fw-bold small">&gt; Assigned Doctor</label>
+                        <select class="form-select form-select-neo" name="doctor_id" required>
+                            <option value="" disabled selected>Select active doctor...</option>
+                            {% for doc in doctors %}
+                            <option value="{{ doc.id }}">{{ doc.name }} ({{ doc.specialization }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label font-monospace fw-bold small">&gt; Appointment Date</label>
+                        <input type="date" class="form-control form-control-neo" name="appointment_date" value="{{ today_str }}" required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label font-monospace fw-bold small">&gt; Scheduled Time</label>
+                        <input type="text" class="form-control form-control-neo" name="appointment_time" value="{{ now_time }}" required>
+                    </div>
+
+                    <button type="submit" class="btn-neo btn-yellow w-100 py-2 fs-6">
+                        <i class="fa-solid fa-print me-2"></i> GENERATE TOKEN & PRINT
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Patients Directory Column -->
+        <div class="col-lg-8">
+            <div class="deck-card">
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-3">
+                    <h5 class="fw-bold mb-0 text-uppercase">// APPOINTMENTS DIRECTORY</h5>
+                    
+                    <div class="d-flex gap-1">
+                        <a href="{{ url_for('receptionist_dashboard', filter='all') }}" 
+                           class="btn-neo btn-neo-sm {% if filter_status == 'all' or not filter_status %}btn-black{% else %}btn-white{% endif %}">
+                            ALL ({{ total_patients_count }})
+                        </a>
+                        <a href="{{ url_for('receptionist_dashboard', filter='running') }}" 
+                           class="btn-neo btn-neo-sm {% if filter_status == 'running' %}btn-yellow{% else %}btn-white{% endif %}">
+                            WAITING ({{ running_count }})
+                        </a>
+                        <a href="{{ url_for('receptionist_dashboard', filter='checked') }}" 
+                           class="btn-neo btn-neo-sm {% if filter_status == 'checked' %}btn-green{% else %}btn-white{% endif %}">
+                            CHECKED ({{ checked_count }})
+                        </a>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <input type="text" class="form-control form-control-neo py-1 table-search-input" 
+                           data-table="recPatientsTable" placeholder="Filter patient directory...">
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-neo" id="recPatientsTable">
+                        <thead>
+                            <tr>
+                                <th>Token</th>
+                                <th>Patient Name</th>
+                                <th>Doctor</th>
+                                <th>Schedule</th>
+                                <th>Status</th>
+                                <th class="text-end">Slip</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in patients %}
+                            <tr>
+                                <td><span class="pixel-token">{{ p.token_number }}</span></td>
+                                <td class="fw-bold">{{ p.name }}</td>
+                                <td>
+                                    <div>{{ p.doctor_name }}</div>
+                                    <span class="badge-neo specialty" style="font-size:0.7rem;">{{ p.specialization }}</span>
+                                </td>
+                                <td>
+                                    <small class="font-monospace">{{ p.appointment_date }} @ {{ p.appointment_time }}</small>
+                                </td>
+                                <td>
+                                    {% if p.is_checked == 1 %}
+                                        <span class="badge-neo checked"><i class="fa-solid fa-check me-1"></i>CHECKED</span>
+                                    {% else %}
+                                        <span class="badge-neo waiting"><i class="fa-solid fa-hourglass-half me-1"></i>WAITING</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <button class="btn-neo btn-neo-sm btn-yellow" title="Print Slip"
+                                            onclick="printToken('{{ p.name }}', '{{ p.token_number }}', '{{ p.doctor_name }}', '{{ p.appointment_date }}', '{{ p.appointment_time }}')">
+                                        <i class="fa-solid fa-print"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4 font-monospace">[ NO PATIENT RECORDS FOUND ]</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
